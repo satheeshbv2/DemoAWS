@@ -16,7 +16,7 @@ phases:
     commands:
       - echo "Logging into Amazon ECR..."
       - aws --version
-      - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REPO
+      - aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 092345342340.dkr.ecr.ap-south-1.amazonaws.com
       - echo "Cleaning old builds..."
 
   build:
