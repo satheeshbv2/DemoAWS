@@ -1,6 +1,10 @@
 version: 0.2
 
 env:
+  parameter-store:
+	DOCKER_REGISTRY_USERNAME: /myapp/docker-credentials/username
+	DOCKER_REGISTRY_PASSWORD: /myapp/docker-credentials/password
+	DOCKER_REGISTRY_URL: /myapp/docker-credentials/url
   variables:
     IMAGE_TAG: "latest"
 
@@ -16,7 +20,8 @@ phases:
     commands:
       - echo "Logging into Amazon ECR..."
       - aws --version
-      - aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 092345342340.dkr.ecr.ap-south-1.amazonaws.com
+	  - docker --version
+      - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REPO
       - echo "Cleaning old builds..."
 
   build:
@@ -24,13 +29,13 @@ phases:
       - echo "Building Spring Boot JAR..."
       - ./mvnw clean package -DskipTests
       - echo "Building Docker image..."
-      - docker build -t $IMAGENAME .
+      - docker build -t "$DOCKER_REGISTRY_URL/$DOCKER_REGISTRY_USERNAME/$IMAGENAME ."
       - docker tag IMAGENAME:latest $ECR_REPO:$IMAGENAME:$IMAGE_TAG
 
   post_build:
     commands:
       - echo "Pushing Docker image to ECR..."
-      - docker push $ECR_REPO/$IMAGENAME:$IMAGE_TAG
+      - docker push "$DOCKER_REGISTRY_URL/$DOCKER_REGISTRY_USERNAME/$IMAGENAME:$IMAGE_TAG"
       - echo "Creating imagedefinitions.json..."
       - printf '[{"name":"springboot","imageUri":"%s"}]' $ECR_REPO:$IMAGE_TAG > imagedefinitions.json
 
